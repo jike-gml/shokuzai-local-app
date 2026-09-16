@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'shokuzai-local-v1.0.0';
+const CACHE_VERSION = 'shokuzai-local-v1.0.1';
 
 const CORE_ASSETS = [
   './',
@@ -14,7 +14,10 @@ const CORE_ASSETS = [
 
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_VERSION).then(cache => cache.addAll(CORE_ASSETS))
+    caches
+      .open(CACHE_VERSION)
+      .then(cache => cache.addAll(CORE_ASSETS))
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -37,7 +40,11 @@ self.addEventListener('fetch', event => {
     caches.match(event.request).then(cached => {
       const network = fetch(event.request)
         .then(response => {
-          if (response && response.ok && event.request.url.startsWith(self.location.origin)) {
+          if (
+            response &&
+            response.ok &&
+            event.request.url.startsWith(self.location.origin)
+          ) {
             const copy = response.clone();
             caches.open(CACHE_VERSION).then(cache => cache.put(event.request, copy));
           }
