@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'shokuzai-local-v1.0.1';
+const CACHE_VERSION = 'shokuzai-local-v1.0.2';
 
 const CORE_ASSETS = [
   './',
@@ -36,25 +36,50 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
-  event.respondWith(
-    caches.match(event.request).then(cached => {
-      const network = fetch(event.request)
+  const url = new URL(event.request.url);
+
+  // app.css は更新通知バナーを強制的に非表示にするホットフィックスを付加。
+  if (url.origin === self.location.origin && url.pathname.endsWith('/css/app.css')) {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' })
+        .then(async response => {
+          const css = await response.text();
+          const patched = `${css}\n.update-banner{display:none!important;}\n`;
+          return new Response(patched, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: { 'Content-Type': 'text/css; charset=utf-8' }
+          });
+        })
+        .catch(async () => {
+          const cached = await caches.match(event.request);
+          if (!cached) throw new Error('CSS unavailable');
+          const css = await cached.text();
+          return new Response(`${css}\n.update-banner{display:none!important;}\n`, {
+            headers: { 'Content-Type': 'text/css; charset=utf-8' }
+          });
+        })
+    );
+    return;
+  }
+
+  // アプリ本体は network-first。最新版を優先し、オフライン時だけキャッシュを使用。
+  if (url.origin === self.location.origin) {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' })
         .then(response => {
-          if (
-            response &&
-            response.ok &&
-            event.request.url.startsWith(self.location.origin)
-          ) {
+          if (response && response.ok) {
             const copy = response.clone();
             caches.open(CACHE_VERSION).then(cache => cache.put(event.request, copy));
           }
           return response;
         })
-        .catch(() => cached);
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
 
-      return cached || network;
-    })
-  );
+  event.respondWith(fetch(event.request));
 });
 
 self.addEventListener('message', event => {
