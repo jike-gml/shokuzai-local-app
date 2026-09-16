@@ -1,0 +1,18 @@
+{
+  "name": "食材管理アプリ Local",
+  "short_name": "食材管理",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fffaf2",
+  "theme_color": "#ff9f43",
+  "description": "スマホ内に在庫データを保存する食材管理PWA",
+  "icons": [
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
