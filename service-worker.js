@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'shokuzai-local-v1.0.2';
+const CACHE_VERSION = 'shokuzai-local-v1.0.3';
 
 const CORE_ASSETS = [
   './',
@@ -8,6 +8,7 @@ const CORE_ASSETS = [
   './js/db.js',
   './js/import.js',
   './js/backup.js',
+  './js/share.js',
   './manifest.json',
   './icons/icon.svg'
 ];
@@ -38,7 +39,6 @@ self.addEventListener('fetch', event => {
 
   const url = new URL(event.request.url);
 
-  // app.css は更新通知バナーを強制的に非表示にするホットフィックスを付加。
   if (url.origin === self.location.origin && url.pathname.endsWith('/css/app.css')) {
     event.respondWith(
       fetch(event.request, { cache: 'no-store' })
@@ -63,7 +63,6 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // アプリ本体は network-first。最新版を優先し、オフライン時だけキャッシュを使用。
   if (url.origin === self.location.origin) {
     event.respondWith(
       fetch(event.request, { cache: 'no-store' })
