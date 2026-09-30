@@ -2,9 +2,9 @@ import { DB_VERSION, getAllIngredients, putIngredient, deleteIngredient as delet
 import { mapSheetCSV, importSheetCSV } from './import.js';
 import { downloadBackup, restoreBackupFile } from './backup.js';
 
-const APP_VERSION = '1.0.0';
-const DEFAULT_CATEGORIES = ['肉','魚','野菜','乾物','調味料','加工品','その他'];
-const COLORS = {肉:'#e99191',魚:'#77addb',野菜:'#81c98a',乾物:'#d3ad74',調味料:'#ba91ce',加工品:'#efa369',その他:'#aab2b8'};
+const APP_VERSION = '1.0.4';
+const DEFAULT_CATEGORIES = ['肉','魚','野菜','乾物','調味料','冷凍食品','加工品','その他'];
+const COLORS = {肉:'#e99191',魚:'#77addb',野菜:'#81c98a',乾物:'#d3ad74',調味料:'#ba91ce',冷凍食品:'#86c5d8',加工品:'#efa369',その他:'#aab2b8'};
 const state = {inventory:[],categories:[],stores:[],selectedCategory:'すべて',detailItem:null,editItem:null,pendingImport:null,registration:null};
 const el = id => document.getElementById(id);
 let toastTimer = null;
@@ -62,12 +62,19 @@ function bindEvents(){
 }
 
 async function initializeConfig(){
-  state.categories = await getConfig('categories', null);
+  const savedCategories = await getConfig('categories', null);
   state.stores = await getConfig('stores', null);
-  if(!Array.isArray(state.categories) || !state.categories.length){
-    state.categories = [...DEFAULT_CATEGORIES];
+
+  const categoriesAreCurrent =
+    Array.isArray(savedCategories) &&
+    savedCategories.length === DEFAULT_CATEGORIES.length &&
+    DEFAULT_CATEGORIES.every((category,index)=>savedCategories[index]===category);
+
+  state.categories = [...DEFAULT_CATEGORIES];
+  if(!categoriesAreCurrent){
     await setConfig('categories', state.categories);
   }
+
   if(!Array.isArray(state.stores)){
     state.stores = [];
     await setConfig('stores', state.stores);
