@@ -211,7 +211,7 @@ async function deleteItem(item){if(!confirm(`「${item.name}」を削除しま�
 function createConsult(){
   const items=state.inventory.filter(i=>!['調味料','その他'].includes(i.category)).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
   const lines=items.length?items.map(i=>i.amount?`- ${i.name}（${i.amount}）`:`- ${i.name}`).join('\n'):'（対象となる食材はありません）';
-  const text=`日分の夕食の献立を考えてください。\n今ある材料は下記のものです。全てを使い切る必要はありません。\n最低限不足する材料は買い足しの指示をしてください。基本的な調味料はあるものとします。\n主菜と副菜の提案をお願いします。\n\n現在の食材\n\n${lines}\n\n\n希望のメニューは\n\nです。\n\n\n過去10食分の献立\n\nなるべく被らず、同じような調理法が続かないよにしてほしいです。\n\n作り方を教えて欲しい献立がある場合はあとで指示します。`;
+  const text=`日分の夕食の献立を考えてください。\n今ある材料は下記のものです。全てを使い切る必要はありません。\n最低限不足する材料は買い足しの指示をしてください。基本的な調味料はあるものとします。\n主菜と副菜の提案をお願いします。\n\n現在の食材\n\n${lines}\n\n\n希望のメニューは\n\nです。\n\n\n過去10食分の献立\n\nなるべく被らず、同じような調理法が続かないようにしてほしいです。\n\n作り方を教えて欲しい献立がある場合はあとで指示します。`;
   showOutput('consultText',text);toast('相談文を作成しました。');return text;
 }
 
