@@ -2,7 +2,7 @@ import { DB_VERSION, getAllIngredients, putIngredient, deleteIngredient as delet
 import { mapSheetCSV, importSheetCSV } from './import.js';
 import { downloadBackup, restoreBackupFile } from './backup.js';
 
-const APP_VERSION = '1.0.4';
+const APP_VERSION = '1.0.5';
 const DEFAULT_CATEGORIES = ['肉','魚','野菜','乾物','調味料','冷凍食品','加工品','その他'];
 const COLORS = {肉:'#e99191',魚:'#77addb',野菜:'#81c98a',乾物:'#d3ad74',調味料:'#ba91ce',冷凍食品:'#86c5d8',加工品:'#efa369',その他:'#aab2b8'};
 const state = {inventory:[],categories:[],stores:[],selectedCategory:'すべて',detailItem:null,editItem:null,pendingImport:null,registration:null};
@@ -211,7 +211,7 @@ async function deleteItem(item){if(!confirm(`「${item.name}」を削除しま�
 function createConsult(){
   const items=state.inventory.filter(i=>!['調味料','その他'].includes(i.category)).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
   const lines=items.length?items.map(i=>i.amount?`- ${i.name}（${i.amount}）`:`- ${i.name}`).join('\n'):'（対象となる食材はありません）';
-  const text=`献立相談テキスト\n\n\n日分の夕食の献立を考えてください。\n今ある材料は下記のものです。全てを使い切る必要はありません。\n最低限不足する材料は買い足しの指示をしてください。基本的な調味料はあるものとします。\n主菜のみの提案で大丈夫です、副菜はあるものを使って作ります。\n\n\n現在の食材\n\n\n${lines}\n\n\n\n希望のメニューは　です。\n\n\n\nなるべく被らず、同じような調理法が続かないようにしてほしいです。\n\n作り方を教えて欲しい献立がある場合はあとで指示します。`;
+  const text=`日分の夕食の献立を考えてください。\n今ある材料は下記のものです。全てを使い切る必要はありません。\n最低限不足する材料は買い足しの指示をしてください。基本的な調味料はあるものとします。\n主菜と副菜の提案をお願いします。\n\n現在の食材\n\n${lines}\n\n\n希望のメニューは\n\nです。\n\n\n過去10食分の献立\n\nなるべく被らず、同じような調理法が続かないよにしてほしいです。\n\n作り方を教えて欲しい献立がある場合はあとで指示します。`;
   showOutput('consultText',text);toast('相談文を作成しました。');return text;
 }
 
