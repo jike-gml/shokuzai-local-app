@@ -4,8 +4,8 @@
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#fffaf2",
-  "theme_color": "#ff9f43",
+  "background_color": "#f8faf7",
+  "theme_color": "#338f83",
   "description": "スマホ内に在庫データを保存する食材管理PWA",
   "icons": [
     {
