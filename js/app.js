@@ -2,9 +2,9 @@ import { DB_VERSION, getAllIngredients, putIngredient, deleteIngredient as delet
 import { mapSheetCSV, importSheetCSV } from './import.js';
 import { downloadBackup, restoreBackupFile } from './backup.js';
 
-const APP_VERSION = '1.0.5';
-const DEFAULT_CATEGORIES = ['肉','魚','野菜','乾物','調味料','冷凍食品','加工品','その他'];
-const COLORS = {肉:'#e99191',魚:'#77addb',野菜:'#81c98a',乾物:'#d3ad74',調味料:'#ba91ce',冷凍食品:'#86c5d8',加工品:'#efa369',その他:'#aab2b8'};
+const APP_VERSION = '1.1.0';
+const DEFAULT_CATEGORIES = ['肉','魚','野菜','乾物','調味料','冷凍食品','加工品','作りおきおかず','乳製品','その他'];
+const COLORS = {肉:'#e49a99',魚:'#79b1ce',野菜:'#78b6a0',乾物:'#cfb183',調味料:'#ab97c9',冷凍食品:'#82baca',加工品:'#e8a98b',作りおきおかず:'#c695b2',乳製品:'#e1be72',その他:'#9faab2'};
 const state = {inventory:[],categories:[],stores:[],selectedCategory:'すべて',detailItem:null,editItem:null,pendingImport:null,registration:null};
 const el = id => document.getElementById(id);
 let toastTimer = null;
@@ -131,6 +131,9 @@ async function addIngredient(){
     await putIngredient({id:crypto.randomUUID(),...data,status:'在庫あり',shopping:false,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
     ['name','amount','expiry','memo'].forEach(id=>el(id).value='');
     await reloadInventory();
+    const submit = el('submitBtn');
+    submit.classList.add('save-success');
+    setTimeout(() => submit.classList.remove('save-success'), 560);
     toast('登録しました。');
   }catch(e){showError(e);}finally{setButtonBusy('submitBtn',false,'入力');}
 }
@@ -163,7 +166,7 @@ function renderInventory(){
   const items=getDisplayItems();el('inventoryCount').textContent=`${items.length}件`;
   const f=document.createDocumentFragment();
   if(!items.length){const d=document.createElement('div');d.className='empty';d.textContent=state.selectedCategory==='すべて'?'登録されている食材はありません。':`${state.selectedCategory}の食材はありません。`;f.appendChild(d);}
-  else items.forEach((item,index)=>{const row=createInventoryRow(item);row.style.animationDelay=`${Math.min(index,10)*24}ms`;f.appendChild(row);});
+  else items.forEach((item,index)=>{const row=createInventoryRow(item);row.style.animationDelay=`${Math.min(index,7)*24}ms`;f.appendChild(row);});
   el('inventoryList').replaceChildren(f);
 }
 
@@ -209,7 +212,7 @@ async function saveEdit(){
 async function deleteItem(item){if(!confirm(`「${item.name}」を削除しますか？\nこの操作は元に戻せません。`))return;try{await deleteIngredientDB(item.id);await reloadInventory();if(el('shoppingText').value)createShoppingList(false);toast('削除しました。');}catch(e){showError(e);}}
 
 function createConsult(){
-  const items=state.inventory.filter(i=>!['調味料','その他'].includes(i.category)).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+  const items=[...state.inventory].sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
   const lines=items.length?items.map(i=>i.amount?`- ${i.name}（${i.amount}）`:`- ${i.name}`).join('\n'):'（対象となる食材はありません）';
   const text=`日分の夕食の献立を考えてください。\n今ある材料は下記のものです。全てを使い切る必要はありません。\n最低限不足する材料は買い足しの指示をしてください。基本的な調味料はあるものとします。\n主菜と副菜の提案をお願いします。\n\n現在の食材\n\n${lines}\n\n\n希望のメニューは\n\nです。\n\n\n過去10食分の献立\n\nなるべく被らず、同じような調理法が続かないようにしてほしいです。\n\n作り方を教えて欲しい献立がある場合はあとで指示します。`;
   showOutput('consultText',text);toast('相談文を作成しました。');return text;
