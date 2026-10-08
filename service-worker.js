@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'shokuzai-local-v1.0.5';
+const CACHE_VERSION = 'shokuzai-local-v1.1.0';
 
 const CORE_ASSETS = [
   './',
