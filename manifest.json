@@ -9,7 +9,7 @@
   "description": "スマホ内に在庫データを保存する食材管理PWA",
   "icons": [
     {
-      "src": "./icons/icon.svg",
+      "src": "./icons/icon.svg?v=1.1.3",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
