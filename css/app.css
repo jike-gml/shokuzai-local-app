@@ -171,3 +171,10 @@ button:active{transform:scale(.975)}
 @media(min-width:700px){.modal{align-items:center}.modal-sheet{border-radius:24px;max-height:85vh}}
 @media(max-width:380px){.input-card,.output-card{padding:10px}.grid-2{gap:6px}.item-buttons{gap:3px}}
 @media(prefers-reduced-motion:reduce){.submit-btn.save-success{animation:none!important}}
+
+.out-of-stock-group{margin-top:12px;padding-top:10px;border-top:1px solid var(--border)}
+.out-of-stock-group>summary{padding:7px 2px;color:var(--muted);font-size:12px;font-weight:800;cursor:pointer}
+.out-of-stock-list{display:grid;gap:7px;margin-top:7px}
+.out-of-stock-item{background:#fbf8f1}
+.out-of-stock-btn{border:1px solid #f0d2a6;background:#fff6e7;color:#a96a28}
+.restore-stock-btn{border:1px solid #c7e7dd;background:#edf7f3;color:#327f72}
