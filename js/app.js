@@ -2,8 +2,9 @@ import { DB_VERSION, getAllIngredients, putIngredient, deleteIngredient as delet
 import { mapSheetCSV, importSheetCSV } from './import.js';
 import { downloadBackup, restoreBackupFile } from './backup.js';
 
-const APP_VERSION = '1.1.2';
+const APP_VERSION = '1.1.3';
 const DEFAULT_CATEGORIES = ['常備食品','肉','魚','野菜','乾物','調味料','冷凍食品','加工品','作りおきおかず','乳製品','その他'];
+const MANAGED_CATEGORIES = new Set(['常備食品','調味料']);
 const COLORS = {肉:'#e49a99',魚:'#79b1ce',野菜:'#78b6a0',乾物:'#cfb183',調味料:'#ab97c9',冷凍食品:'#82baca',加工品:'#e8a98b',作りおきおかず:'#c695b2',常備食品:'#a8af76',乳製品:'#e1be72',その他:'#9faab2'};
 const state = {inventory:[],categories:[],stores:[],selectedCategory:'すべて',detailItem:null,editItem:null,pendingImport:null,registration:null};
 const el = id => document.getElementById(id);
@@ -160,13 +161,24 @@ function renderCategoryFilters(){
 }
 
 function handleCategoryFilterClick(e){const b=e.target.closest('[data-category]');if(!b)return;state.selectedCategory=b.dataset.category;renderCategoryFilters();renderInventory();}
-function getDisplayItems(){return state.inventory.filter(i=>state.selectedCategory==='すべて'||i.category===state.selectedCategory).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));}
+function isManagedItem(item){return MANAGED_CATEGORIES.has(item.category);}
+function isOutOfStock(item){return isManagedItem(item)&&item.status==='在庫なし';}
+function matchesSelectedCategory(item){return state.selectedCategory==='すべて'||item.category===state.selectedCategory;}
+function getDisplayItems(){return state.inventory.filter(i=>matchesSelectedCategory(i)&&!isOutOfStock(i)).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));}
+function getOutOfStockItems(){return state.inventory.filter(i=>matchesSelectedCategory(i)&&isOutOfStock(i)).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));}
 
 function renderInventory(){
-  const items=getDisplayItems();el('inventoryCount').textContent=`${items.length}件`;
+  const items=getDisplayItems();const outOfStock=getOutOfStockItems();el('inventoryCount').textContent=items.length+'件';
   const f=document.createDocumentFragment();
-  if(!items.length){const d=document.createElement('div');d.className='empty';d.textContent=state.selectedCategory==='すべて'?'登録されている食材はありません。':`${state.selectedCategory}の食材はありません。`;f.appendChild(d);}
-  else items.forEach((item,index)=>{const row=createInventoryRow(item);row.style.animationDelay=`${Math.min(index,7)*24}ms`;f.appendChild(row);});
+  if(!items.length){const d=document.createElement('div');d.className='empty';d.textContent=state.selectedCategory==='すべて'?'在庫のある食材はありません。':state.selectedCategory+'の在庫はありません。';f.appendChild(d);}
+  else items.forEach((item,index)=>{const row=createInventoryRow(item);row.style.animationDelay=Math.min(index,7)*24+'ms';f.appendChild(row);});
+  if(outOfStock.length){
+    const group=document.createElement('details');group.className='out-of-stock-group';
+    const summary=document.createElement('summary');summary.textContent='在庫なし（'+outOfStock.length+'件）・マスター';group.appendChild(summary);
+    const list=document.createElement('div');list.className='out-of-stock-list';
+    outOfStock.forEach(item=>list.appendChild(createOutOfStockRow(item)));
+    group.appendChild(list);f.appendChild(group);
+  }
   el('inventoryList').replaceChildren(f);
 }
 
@@ -174,8 +186,18 @@ function createInventoryRow(item){
   const row=document.createElement('div');row.className='inventory-item'+(item.shopping?' is-shopping':'');row.style.borderLeftColor=COLORS[item.category]||'#b9c0c4';row.dataset.id=item.id;
   const info=document.createElement('div');info.className='item-info';info.dataset.action='detail';
   const name=document.createElement('div');name.className='item-name';name.textContent=item.name;
-  const sub=document.createElement('div');sub.className='item-sub';sub.textContent=[item.amount,item.category,item.expiry?`期限 ${item.expiry}`:''].filter(Boolean).join(' ・ ');info.append(name,sub);
-  const buttons=document.createElement('div');buttons.className='item-buttons';buttons.append(makeMiniButton('編集','edit','edit-btn'),makeMiniButton('削除','delete','delete-btn'));
+  const sub=document.createElement('div');sub.className='item-sub';sub.textContent=[item.amount,item.category,item.expiry?'期限 '+item.expiry:''].filter(Boolean).join(' ・ ');info.append(name,sub);
+  const buttons=document.createElement('div');buttons.className='item-buttons';buttons.append(makeMiniButton('編集','edit','edit-btn'));
+  buttons.append(isManagedItem(item)?makeMiniButton('在庫なし','out-of-stock','out-of-stock-btn'):makeMiniButton('削除','delete','delete-btn'));
+  const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.className='shopping-check';checkbox.checked=!!item.shopping;checkbox.dataset.action='shopping';buttons.appendChild(checkbox);
+  row.append(info,buttons);return row;
+}
+function createOutOfStockRow(item){
+  const row=document.createElement('div');row.className='inventory-item out-of-stock-item'+(item.shopping?' is-shopping':'');row.style.borderLeftColor=COLORS[item.category]||'#b9c0c4';row.dataset.id=item.id;
+  const info=document.createElement('div');info.className='item-info';info.dataset.action='detail';
+  const name=document.createElement('div');name.className='item-name';name.textContent=item.name;
+  const sub=document.createElement('div');sub.className='item-sub';sub.textContent=[item.category,'在庫なし'].join(' ・ ');info.append(name,sub);
+  const buttons=document.createElement('div');buttons.className='item-buttons';buttons.append(makeMiniButton('編集','edit','edit-btn'),makeMiniButton('在庫あり','restore-stock','restore-stock-btn'));
   const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.className='shopping-check';checkbox.checked=!!item.shopping;checkbox.dataset.action='shopping';buttons.appendChild(checkbox);
   row.append(info,buttons);return row;
 }
@@ -185,7 +207,18 @@ function findItemFromTarget(target){const row=target.closest('.inventory-item');
 function handleInventoryClick(e){
   const t=e.target.closest('[data-action]');if(!t||t.dataset.action==='shopping')return;
   const item=findItemFromTarget(t);if(!item)return;
-  if(t.dataset.action==='detail')openDetail(item);if(t.dataset.action==='edit')openEdit(item);if(t.dataset.action==='delete')deleteItem(item);
+  if(t.dataset.action==='detail')openDetail(item);
+  if(t.dataset.action==='edit')openEdit(item);
+  if(t.dataset.action==='delete')deleteItem(item);
+  if(t.dataset.action==='out-of-stock')setOutOfStock(item);
+  if(t.dataset.action==='restore-stock')restoreStock(item);
+}
+
+async function setOutOfStock(item){
+  try{item.status='在庫なし';item.updatedAt=new Date().toISOString();await putIngredient(item);await reloadInventory();if(el('shoppingText').value)createShoppingList(false);toast('在庫なしにして買い物リストに追加しました。');}catch(e){showError(e);}
+}
+async function restoreStock(item){
+  try{item.status='在庫あり';item.updatedAt=new Date().toISOString();await putIngredient(item);await reloadInventory();if(el('shoppingText').value)createShoppingList(false);toast('在庫ありに戻しました。');}catch(e){showError(e);}
 }
 
 async function handleInventoryChange(e){
@@ -212,16 +245,16 @@ async function saveEdit(){
 async function deleteItem(item){if(!confirm(`「${item.name}」を削除しますか？\nこの操作は元に戻せません。`))return;try{await deleteIngredientDB(item.id);await reloadInventory();if(el('shoppingText').value)createShoppingList(false);toast('削除しました。');}catch(e){showError(e);}}
 
 function createConsult(){
-  const items=[...state.inventory].sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+  const items=state.inventory.filter(i=>!isOutOfStock(i)).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
   const lines=items.length?items.map(i=>i.amount?`- ${i.name}（${i.amount}）`:`- ${i.name}`).join('\n'):'（対象となる食材はありません）';
   const text=`日分の夕食の献立を考えてください。\n今ある材料は下記のものです。全てを使い切る必要はありません。\n最低限不足する材料は買い足しの指示をしてください。基本的な調味料はあるものとします。\n主菜と副菜の提案をお願いします。\n\n現在の食材\n\n${lines}\n\n\n希望のメニューは\n\nです。\n\n\n過去10食分の献立\n\nなるべく被らず、同じような調理法が続かないようにしてほしいです。\n\n作り方を教えて欲しい献立がある場合はあとで指示します。`;
   showOutput('consultText',text);toast('相談文を作成しました。');return text;
 }
 
-function createShoppingList(showNotice=true){const text=state.inventory.filter(i=>i.shopping).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||''))).map(i=>i.name).join('\n');showOutput('shoppingText',text);if(showNotice)toast(text?'買い物リストを作成しました。':'チェックされた品目はありません。');return text;}
+function createShoppingList(showNotice=true){const text=state.inventory.filter(i=>i.shopping||isOutOfStock(i)).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||''))).map(i=>i.name).join('\n');showOutput('shoppingText',text);if(showNotice)toast(text?'買い物リストを作成しました。':'チェックされた品目はありません。');return text;}
 function showOutput(id,text){el(id).value=text;el(id).style.display='block';}
 async function copyOutput(id,createFunction){const ta=el(id);if(!ta.value)createFunction();if(!ta.value)return;try{await navigator.clipboard.writeText(ta.value);}catch{ta.style.display='block';ta.select();document.execCommand('copy');}toast('コピーしました。');}
-function updateMainCount(){el('inventoryCountMain').textContent=`${state.inventory.length}件`;}
+function updateMainCount(){el('inventoryCountMain').textContent=`${state.inventory.filter(i=>!isOutOfStock(i)).length}件`;}
 
 function openSettings(){updateBackupLabel();el('settingsModal').classList.add('show');}
 function closeSettings(){el('settingsModal').classList.remove('show');}
