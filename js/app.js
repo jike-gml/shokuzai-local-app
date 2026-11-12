@@ -2,7 +2,7 @@ import { DB_VERSION, getAllIngredients, putIngredient, deleteIngredient as delet
 import { mapSheetCSV, importSheetCSV } from './import.js';
 import { downloadBackup, restoreBackupFile } from './backup.js';
 
-const APP_VERSION = '1.1.1';
+const APP_VERSION = '1.1.2';
 const DEFAULT_CATEGORIES = ['常備食品','肉','魚','野菜','乾物','調味料','冷凍食品','加工品','作りおきおかず','乳製品','その他'];
 const COLORS = {肉:'#e49a99',魚:'#79b1ce',野菜:'#78b6a0',乾物:'#cfb183',調味料:'#ab97c9',冷凍食品:'#82baca',加工品:'#e8a98b',作りおきおかず:'#c695b2',常備食品:'#a8af76',乳製品:'#e1be72',その他:'#9faab2'};
 const state = {inventory:[],categories:[],stores:[],selectedCategory:'すべて',detailItem:null,editItem:null,pendingImport:null,registration:null};
