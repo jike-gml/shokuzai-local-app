@@ -245,7 +245,7 @@ async function saveEdit(){
 async function deleteItem(item){if(!confirm(`「${item.name}」を削除しますか？\nこの操作は元に戻せません。`))return;try{await deleteIngredientDB(item.id);await reloadInventory();if(el('shoppingText').value)createShoppingList(false);toast('削除しました。');}catch(e){showError(e);}}
 
 function createConsult(){
-  const items=state.inventory.filter(i=>!isOutOfStock(i)).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+  const items=state.inventory.filter(i=>i.category!=='調味料'&&!isOutOfStock(i)).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
   const lines=items.length?items.map(i=>i.amount?`- ${i.name}（${i.amount}）`:`- ${i.name}`).join('\n'):'（対象となる食材はありません）';
   const text=`日分の夕食の献立を考えてください。\n今ある材料は下記のものです。全てを使い切る必要はありません。\n最低限不足する材料は買い足しの指示をしてください。基本的な調味料はあるものとします。\n主菜と副菜の提案をお願いします。\n\n現在の食材\n\n${lines}\n\n\n希望のメニューは\n\nです。\n\n\n過去10食分の献立\n\nなるべく被らず、同じような調理法が続かないようにしてほしいです。\n\n作り方を教えて欲しい献立がある場合はあとで指示します。`;
   showOutput('consultText',text);toast('相談文を作成しました。');return text;
