@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'shokuzai-local-v1.1.3';
+const CACHE_VERSION = 'shokuzai-local-v1.1.4';
 
 const CORE_ASSETS = [
   './',
@@ -10,7 +10,8 @@ const CORE_ASSETS = [
   './js/backup.js',
   './js/share.js',
   './manifest.json',
-  './icons/icon.svg'
+  './icons/food-basket-192.png',
+  './icons/food-basket-512.png'
 ];
 
 self.addEventListener('install', event => {
@@ -27,7 +28,7 @@ self.addEventListener('activate', event => {
     caches.keys()
       .then(keys => Promise.all(
         keys
-          .filter(key => key !== CACHE_VERSION)
+          .filter(key => key.startsWith('shokuzai-local-') && key !== CACHE_VERSION)
           .map(key => caches.delete(key))
       ))
       .then(() => self.clients.claim())
